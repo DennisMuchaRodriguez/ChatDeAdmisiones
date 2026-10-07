@@ -128,6 +128,9 @@ la barra negra de DEMO desaparece sola y se carga su chat directamente.
 
 ## 4. Publicarlo gratis
 
+👉 **Primera vez? Sigue la guía paso a paso: [docs/PUBLICAR-Y-ENTREGAR.md](docs/PUBLICAR-Y-ENTREGAR.md)**
+(publicar, editar desde el navegador, crear el chat de cada cliente y qué entregarle).
+
 Cualquier hosting de páginas estáticas sirve:
 
 - **GitHub Pages:** en el repositorio → *Settings → Pages → Deploy from a branch* → rama `main`, carpeta `/ (root)`.
