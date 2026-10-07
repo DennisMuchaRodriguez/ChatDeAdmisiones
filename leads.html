@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leads registrados</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --primario: #1d4ed8; --texto: #1f2937; --suave: #6b7280; --borde: #e5e7eb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: var(--texto); background: #f3f5fa; }
+    main { max-width: 1100px; margin: 0 auto; padding: 32px 16px; }
+    a.volver { color: var(--primario); font-weight: 600; text-decoration: none; }
+    h1 { margin: 12px 0 4px; font-size: 30px; letter-spacing: -.02em; }
+    .ayuda { color: var(--suave); margin: 0 0 22px; line-height: 1.5; max-width: 75ch; }
+    .acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+    select, button { font: inherit; font-size: 14px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--borde); background: #fff; cursor: pointer; }
+    button.principal { background: var(--primario); color: #fff; border-color: var(--primario); font-weight: 700; }
+    button.peligro { color: #b91c1c; }
+    .tarjeta { background: #fff; border-radius: 16px; border: 1px solid var(--borde); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+    th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); background: #fafbfc; }
+    tr:last-child td { border-bottom: 0; }
+    .etiqueta { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #eef2ff; color: #3730a3; }
+    .etiqueta.demo { background: #fef3c7; color: #92400e; }
+    .vacio { padding: 40px; text-align: center; color: var(--suave); }
+    .wa { color: #15803d; font-weight: 700; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="volver" id="volver" href="index.html">← Volver al chat</a>
+    <h1>📋 Leads registrados</h1>
+    <p class="ayuda">
+      Aquí aparecen los contactos que dejaron su nombre y celular <strong>en este navegador</strong>.
+      Sirve para la demo: en un cliente real los leads llegan a su WhatsApp y/o a una hoja de Google Sheets
+      (ver <code>docs/GOOGLE-SHEETS.md</code>).
+    </p>
+    <div class="acciones">
+      <select id="cliente" aria-label="Cliente"></select>
+      <button class="principal" id="exportar" type="button">⬇ Descargar Excel (CSV)</button>
+      <button class="peligro" id="borrar" type="button">Borrar todo</button>
+    </div>
+    <div class="tarjeta" id="tabla"></div>
+  </main>
+
+  <script src="js/configs/colegio.js"></script>
+  <script src="js/configs/academia.js"></script>
+  <script src="js/configs/clinica.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const CONFIGS = globalThis.CONFIGS;
+      const params = new URLSearchParams(location.search);
+      const selector = document.getElementById('cliente');
+      let id = CONFIGS[params.get('cliente')] ? params.get('cliente') : Object.keys(CONFIGS)[0];
+
+      const escapar = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+      const fecha = (iso) => new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+
+      function leer() {
+        try { return JSON.parse(localStorage.getItem('leads:' + id) || '[]'); } catch (e) { return []; }
+      }
+
+      function pintar() {
+        const config = CONFIGS[id];
+        document.documentElement.style.setProperty('--primario', config.colores.primario);
+        document.getElementById('volver').href = 'index.html?cliente=' + id;
+        const etiquetaInteres = (config.lead.extra && config.lead.extra.etiqueta) || 'Interés';
+        const leads = leer().slice().reverse();
+        const tabla = document.getElementById('tabla');
+        if (!leads.length) {
+          tabla.innerHTML = '<div class="vacio">Todavía no hay leads. Abre el chat, conversa y deja un nombre y celular de prueba.</div>';
+          return;
+        }
+        tabla.innerHTML = `<table>
+          <thead><tr><th>Fecha</th><th>Nombre</th><th>Celular</th><th>${escapar(etiquetaInteres)}</th><th>Temas consultados</th><th>Origen</th></tr></thead>
+          <tbody>${leads.map((l) => `<tr>
+            <td>${escapar(fecha(l.fecha))}</td>
+            <td><strong>${escapar(l.nombre)}</strong></td>
+            <td><a class="wa" href="https://wa.me/${escapar((CONFIGS[id].lead.codigoPais || '51') + l.celular)}" target="_blank" rel="noopener">${escapar(l.celular)}</a></td>
+            <td>${escapar(l.interes)}</td>
+            <td>${escapar((l.temas || []).join(', '))}</td>
+            <td><span class="etiqueta ${l.origen === 'demo' ? 'demo' : ''}">${escapar(l.origen)}</span></td>
+          </tr>`).join('')}</tbody></table>`;
+      }
+
+      function exportar() {
+        const filas = [['Fecha', 'Nombre', 'Celular', 'Interés', 'Temas consultados', 'Origen']].concat(
+          leer().map((l) => [fecha(l.fecha), l.nombre, l.celular, l.interes, (l.temas || []).join(', '), l.origen])
+        );
+        const csv = filas.map((f) => f.map((v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+        // El BOM (﻿) hace que Excel muestre bien las tildes y la ñ.
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+        const enlace = document.createElement('a');
+        enlace.href = URL.createObjectURL(blob);
+        enlace.download = `leads-${id}-${new Date().toISOString().slice(0, 10)}.csv`;
+        enlace.click();
+        URL.revokeObjectURL(enlace.href);
+      }
+
+      selector.innerHTML = Object.values(CONFIGS).map((c) => `<option value="${c.id}">${c.logo} ${escapar(c.nombre)}</option>`).join('');
+      selector.value = id;
+      selector.addEventListener('change', () => { id = selector.value; history.replaceState(null, '', '?cliente=' + id); pintar(); });
+      document.getElementById('exportar').addEventListener('click', exportar);
+      document.getElementById('borrar').addEventListener('click', () => {
+        if (!confirm('¿Borrar todos los leads de este cliente en este navegador?')) return;
+        try { localStorage.removeItem('leads:' + id); } catch (e) { /* sin almacenamiento */ }
+        pintar();
+      });
+      pintar();
+    })();
+  </script>
+</body>
+</html>
