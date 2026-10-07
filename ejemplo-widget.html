@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ejemplo de web con el widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --primario: #1d4ed8; --oscuro: #172554; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #1f2937; background: #fff; }
+    .aviso-demo { background: #0f172a; color: #e2e8f0; font-size: 13px; padding: 10px 16px; text-align: center; }
+    .aviso-demo a { color: #fbbf24; font-weight: 700; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 6vw; border-bottom: 1px solid #eef0f4; }
+    .logo { font-weight: 800; font-size: 20px; color: var(--oscuro); }
+    nav { display: flex; gap: 22px; font-size: 15px; color: #4b5563; }
+    .hero { padding: 80px 6vw 90px; background: linear-gradient(135deg, var(--primario), var(--oscuro)); color: #fff; }
+    .hero h1 { font-size: clamp(32px, 5vw, 56px); margin: 0 0 14px; letter-spacing: -.02em; max-width: 16ch; line-height: 1.05; }
+    .hero p { font-size: 19px; opacity: .9; max-width: 44ch; margin: 0 0 28px; line-height: 1.5; }
+    .hero span { display: inline-block; background: #fff; color: var(--oscuro); font-weight: 700; padding: 13px 22px; border-radius: 12px; }
+    .secciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; padding: 60px 6vw; }
+    .secciones div { background: #f6f7fb; border-radius: 16px; padding: 22px; min-height: 140px; }
+    .secciones h3 { margin: 0 0 8px; color: var(--oscuro); }
+    .secciones p { margin: 0; color: #6b7280; line-height: 1.5; }
+    @media (max-width: 700px) { nav { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="aviso-demo">
+    Así se vería el chat dentro de la web actual del cliente (botón abajo a la derecha). <a href="index.html" id="volver">← Volver a la demo</a>
+  </div>
+  <header><div class="logo" id="logo"></div><nav><span>Nosotros</span><span>Servicios</span><span>Admisión</span><span>Contacto</span></nav></header>
+  <section class="hero">
+    <h1 id="titulo"></h1>
+    <p id="eslogan"></p>
+    <span>Conócenos</span>
+  </section>
+  <section class="secciones" id="secciones"></section>
+
+  <script src="js/configs/colegio.js"></script>
+  <script src="js/configs/academia.js"></script>
+  <script src="js/configs/clinica.js"></script>
+  <script>
+    (function () {
+      // Esta página simula la web del cliente con sus colores y textos.
+      const params = new URLSearchParams(location.search);
+      const id = CONFIGS[params.get('cliente')] ? params.get('cliente') : Object.keys(CONFIGS)[0];
+      const c = CONFIGS[id];
+      document.documentElement.style.setProperty('--primario', c.colores.primario);
+      document.documentElement.style.setProperty('--oscuro', c.colores.oscuro);
+      document.getElementById('logo').textContent = c.logo + ' ' + c.nombre;
+      document.getElementById('titulo').textContent = c.nombre;
+      document.getElementById('eslogan').textContent = c.eslogan;
+      document.getElementById('volver').href = 'index.html?cliente=' + id;
+      document.getElementById('secciones').innerHTML = c.destacados
+        .map((d) => '<div><h3>' + d.icono + ' ' + d.titulo + '</h3><p>' + d.texto + '</p></div>').join('');
+
+      // Esto es exactamente lo que se pega en la web del cliente (una sola etiqueta <script>):
+      const s = document.createElement('script');
+      s.src = 'js/widget.js';
+      s.setAttribute('data-cliente', id);
+      s.setAttribute('data-color', c.colores.primario);
+      s.setAttribute('data-saludo', '¿Tiene dudas? Pregúntele a ' + c.asistente.nombre + ' 👋');
+      document.body.appendChild(s);
+    })();
+  </script>
+</body>
+</html>
